@@ -4,13 +4,29 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { useWeather } from "@/context/WeatherContext";
 
+// Helper function to get the appropriate weather gradient based on weather type
+const getWeatherGradient = (weatherType: string) => {
+  switch (weatherType) {
+    case 'sunny':
+      return 'from-yellow-300 to-amber-500';
+    case 'rainy':
+      return 'from-blue-400 to-indigo-600';
+    case 'cloudy':
+      return 'from-gray-300 to-gray-500';
+    case 'mild':
+      return 'from-green-300 to-teal-500';
+    default:
+      return 'from-blue-300 to-indigo-400';
+  }
+};
+
 function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [animationCompleted, setAnimationCompleted] = useState(false);
   const bgRef = useRef<HTMLDivElement>(null);
   
-  const { todayWeather, currentLocation, isLoading } = useWeather();
+  const { todayWeather, currentLocation, isLoading, weatherType } = useWeather();
   
   useEffect(() => {
     // Préchargement de l'image de fond pour éviter le flash
@@ -91,7 +107,8 @@ function HomePage() {
         <div className="w-full max-w-xl transform transition-all duration-500 
                       hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
           <WeatherCow 
-            cycleTime={12000} 
+            cycleTime={5000} // 10 secondes pour chaque état standard
+            goodbyeTime={10000} // 30 secondes pour l'état au revoir
             showDebug={false}
             onAnimationComplete={handleAnimationComplete} 
           />

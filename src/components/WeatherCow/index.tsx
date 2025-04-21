@@ -7,6 +7,23 @@ import solutionImg from "@/assets/image/solution.png";
 import presentationImg from "@/assets/image/presentation.png";
 // Weather images will be imported dynamically
 
+// Helper function to get the appropriate weather gradient based on weather type
+const getWeatherGradient = () => {
+  const { weatherType } = useWeather();
+  switch (weatherType) {
+    case 'sunny':
+      return 'from-yellow-300 to-amber-500';
+    case 'rainy':
+      return 'from-blue-400 to-indigo-600';
+    case 'cloudy':
+      return 'from-gray-300 to-gray-500';
+    case 'mild':
+      return 'from-green-300 to-teal-500';
+    default:
+      return 'from-blue-300 to-indigo-400';
+  }
+};
+
 // Animation states
 enum AnimationState {
   PRESENTATION,
@@ -17,12 +34,18 @@ enum AnimationState {
 }
 
 interface WeatherCowProps {
-  cycleTime?: number; // Time in ms for the full animation cycle
+  cycleTime?: number; // Base time in ms for states
+  goodbyeTime?: number; // Extended time for the goodbye state in ms
   showDebug?: boolean; // Whether to show debug info
   onAnimationComplete?: () => void; // Callback when animation completes one cycle
 }
 
-const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = false, onAnimationComplete }) => {
+const WeatherCow: React.FC<WeatherCowProps> = ({ 
+  cycleTime = 10000, // 10 seconds per state by default
+  goodbyeTime = 30000, // 30 seconds for goodbye state
+  showDebug = false, 
+  onAnimationComplete 
+}) => {
   const [animationState, setAnimationState] = useState<AnimationState>(AnimationState.PRESENTATION);
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const [weatherImages, setWeatherImages] = useState<Record<string, string>>({});
@@ -30,6 +53,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
   const [bounceEffect, setBounceEffect] = useState(false);
   const [specialEffect, setSpecialEffect] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number | null>(null);
   
   const { todayWeather, weatherType, currentLocation } = useWeather();
   
@@ -57,11 +81,10 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
     loadWeatherImages();
   }, []);
   
-  // Cycle through animation states with smooth transitions
+  // Modified cycle through animation states with state-specific durations
   useEffect(() => {
-    const timePerState = cycleTime / 5;
-    
-    const animationTimer = setInterval(() => {
+    // Function to handle state transition
+    const transitionToNextState = () => {
       // Start transition animation
       setTransitioning(true);
       
@@ -93,9 +116,26 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         
         // Start transition in
         setTransitioning(false);
+        
+        // Schedule the next transition with the appropriate time
+        scheduleNextTransition();
       }, 500); // Longer transition for smoother effect
+    };
+    
+    // Function to schedule the next transition with the appropriate time
+    const scheduleNextTransition = () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       
-    }, timePerState);
+      // Determine the duration for the current state
+      const nextStateDuration = animationState === AnimationState.GOODBYE ? goodbyeTime : cycleTime;
+      
+      timerRef.current = window.setTimeout(transitionToNextState, nextStateDuration);
+    };
+    
+    // Initial scheduling
+    scheduleNextTransition();
     
     // Add random floating movement to the container
     const floatAnimation = () => {
@@ -115,10 +155,12 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
     const floatTimer = setInterval(floatAnimation, 3000);
     
     return () => {
-      clearInterval(animationTimer);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       clearInterval(floatTimer);
     };
-  }, [cycleTime, onAnimationComplete, animationState]);
+  }, [cycleTime, goodbyeTime, onAnimationComplete, animationState]);
 
   // Handle image error
   const handleImgError = (imgPath: string) => {
@@ -152,7 +194,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         return (
           <div className={`flex flex-col items-center transition-all duration-500 ${transitionClasses}`}>
             {imgError["presentation"] ? (
-              <div className="w-72 h-72 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
+              <div className="w-96 h-96 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
                 <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : ( 
@@ -161,7 +203,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
                 <img 
                   src={presentationImg}
                   alt="La vache se présente" 
-                  className="relative w-72 h-72 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
+                  className="relative w-96 h-96 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
                   onError={() => handleImgError("presentation")}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-20 rounded-full"></div>
@@ -177,7 +219,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         return (
           <div className={`flex flex-col items-center transition-all duration-500 ${transitionClasses}`}>
             {imgError["question"] ? (
-              <div className="w-72 h-72 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
+              <div className="w-96 h-96 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
                 <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : ( 
@@ -186,7 +228,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
                 <img 
                   src={questionImg}
                   alt="La vache réfléchit à la météo" 
-                  className="relative w-72 h-72 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
+                  className="relative w-96 h-96 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
                   onError={() => handleImgError("question")}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-20 rounded-full"></div>
@@ -209,7 +251,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         return (
           <div className={`flex flex-col items-center transition-all duration-500 ${transitionClasses}`}>
             {imgError["solution"] ? (
-              <div className="w-72 h-72 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
+              <div className="w-96 h-96 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
                 <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : (
@@ -218,7 +260,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
                 <img 
                   src={solutionImg}
                   alt="La vache révèle la météo" 
-                  className="relative w-72 h-72 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
+                  className="relative w-96 h-96 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
                   onError={() => handleImgError("solution")}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-20 rounded-full"></div>
@@ -244,7 +286,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         return (
           <div className={`flex flex-col items-center transition-all duration-500 ${transitionClasses}`}>
             {!weatherImg || imgError[weatherType] ? (
-              <div className="w-72 h-72 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
+              <div className="w-96 h-96 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
                 <p className="text-red-500">Image non trouvée: {weatherType}.png</p>
               </div>
             ) : (
@@ -253,7 +295,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
                 <img 
                   src={weatherImg}
                   alt={`La vache dans une météo ${weatherType}`} 
-                  className="relative w-72 h-72 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
+                  className="relative w-96 h-96 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
                   onError={() => handleImgError(weatherType)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-20 rounded-full"></div>
@@ -315,7 +357,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         return (
           <div className={`flex flex-col items-center transition-all duration-500 ${transitionClasses}`}>
             {imgError["solution"] ? (
-              <div className="w-72 h-72 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
+              <div className="w-96 h-96 bg-gray-200 flex items-center justify-center border rounded-lg shadow-inner">
                 <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : (
@@ -324,7 +366,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
                 <img 
                   src={presentationImg} // Réutilisation de l'image de présentation
                   alt="La vache dit au revoir" 
-                  className="relative w-72 h-72 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
+                  className="relative w-96 h-96 object-contain filter drop-shadow-xl hover:scale-105 transition-transform duration-300" 
                   onError={() => handleImgError("presentation")}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white opacity-20 rounded-full"></div>
@@ -377,6 +419,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = f
         </ul>
         <p>Current animation state: {AnimationState[animationState]}</p>
         <p>Special effect: {specialEffect || 'none'}</p>
+        <p>Duration: {animationState === AnimationState.GOODBYE ? goodbyeTime/1000 : cycleTime/1000}s</p>
         <p>Make sure these files exist in your <strong>src/assets/image</strong> directory!</p>
         <button 
           className="mt-2 bg-blue-500 text-white px-2 py-1 text-xs rounded"
