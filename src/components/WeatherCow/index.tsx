@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import meteoData from "@/pages/stats/components/meteo.json";
+import { useWeather } from "@/context/WeatherContext";
 
 // Import images directly - Vite will handle the bundling
 import questionImg from "@/assets/image/question.png";
@@ -20,11 +20,13 @@ interface WeatherCowProps {
   showDebug?: boolean; // Whether to show debug info
 }
 
-const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = true }) => {
+const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = false }) => {
   const [animationState, setAnimationState] = useState<AnimationState>(AnimationState.PRESENTATION);
-  const [currentWeatherIndex, setCurrentWeatherIndex] = useState<number>(0);
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const [weatherImages, setWeatherImages] = useState<Record<string, string>>({});
+  const [transitioning, setTransitioning] = useState(false);
+  
+  const { todayWeather, weatherType, currentLocation } = useWeather();
   
   // Load weather images dynamically
   useEffect(() => {
@@ -50,32 +52,27 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = t
     loadWeatherImages();
   }, []);
   
-  // Get today's forecast (using the first entry of our data for demo)
-  const todayForecast = meteoData[currentWeatherIndex];
-  
-  // Determine weather type based on data
-  const getWeatherType = () => {
-    const { temperature_c, pluie_mm, taux_de_nuage } = todayForecast;
-    
-    if (pluie_mm > 5) return "rainy";
-    if (taux_de_nuage > 70) return "cloudy";
-    if (temperature_c > 20) return "sunny";
-    return "mild";
-  };
-  
-  // Cycle through animation states
+  // Cycle through animation states with smooth transitions
   useEffect(() => {
-    const timePerState = cycleTime / 4; // Divide cycle time equally between 4 states now
+    const timePerState = cycleTime / 4;
     
     const animationTimer = setInterval(() => {
-      setAnimationState(prevState => {
-        if (prevState === AnimationState.WEATHER) {
-          // When completing a cycle, move to next weather data
-          setCurrentWeatherIndex(prev => (prev + 1) % meteoData.length);
-          return AnimationState.PRESENTATION;
-        }
-        return prevState + 1;
-      });
+      // Start transition animation
+      setTransitioning(true);
+      
+      // After transition out completes, change state
+      setTimeout(() => {
+        setAnimationState(prevState => {
+          if (prevState === AnimationState.WEATHER) {
+            return AnimationState.PRESENTATION;
+          }
+          return prevState + 1;
+        });
+        
+        // Start transition in
+        setTransitioning(false);
+      }, 300); // Match this with the CSS transition duration
+      
     }, timePerState);
     
     return () => clearInterval(animationTimer);
@@ -87,89 +84,125 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = t
     setImgError(prev => ({ ...prev, [imgPath]: true }));
   };
   
-  // Render different images based on the state
+  // Get animation state text for accessibility and display
+  const getStateDescription = () => {
+    switch (animationState) {
+      case AnimationState.PRESENTATION: return "Présentation";
+      case AnimationState.QUESTION: return `Question sur la météo à ${currentLocation}`;
+      case AnimationState.SOLUTION: return `Révélation de la météo pour ${currentLocation}`;
+      case AnimationState.WEATHER: return `Météo: ${weatherType}`;
+    }
+  };
+  
+  // Render different images based on the state with transitions
   const renderCowImage = () => {
-    const weatherType = getWeatherType();
+    const transitionClasses = transitioning ? 
+      'opacity-0 transform translate-y-4' : 
+      'opacity-100 transform translate-y-0';
     
     switch (animationState) {
       case AnimationState.PRESENTATION:
         return (
-          <div className="flex flex-col items-center">
+          <div className={`flex flex-col items-center transition-all duration-300 ${transitionClasses}`}>
             {imgError["presentation"] ? (
-              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border">
-                <p className="text-red-500">Image not found</p>
+              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border rounded-lg">
+                <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : ( 
-              <img 
-                src={presentationImg}
-                alt="The cow saying hello" 
-                className="w-64 h-64 object-contain" 
-                onError={() => handleImgError("presentation")}
-              />
+              <div className="relative">
+                <img 
+                  src={presentationImg}
+                  alt="La vache se présente" 
+                  className="w-64 h-64 object-contain filter drop-shadow-lg" 
+                  onError={() => handleImgError("presentation")}
+                />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-transparent to-white opacity-25 rounded-full"></div>
+              </div>
             )}
-            <p className="text-lg mt-2 font-bold">Bonjour ! Je suis votre vache météorologue !</p>
+            <div className="mt-4 text-center bg-white bg-opacity-75 px-4 py-2 rounded-full shadow-md">
+              <p className="text-lg font-bold text-blue-800">Bonjour ! Je suis votre vache météorologue !</p>
+            </div>
           </div>
         );
 
       case AnimationState.QUESTION:
         return (
-          <div className="flex flex-col items-center">
+          <div className={`flex flex-col items-center transition-all duration-300 ${transitionClasses}`}>
             {imgError["question"] ? (
-              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border">
-                <p className="text-red-500">Image not found</p>
+              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border rounded-lg">
+                <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : ( 
-              <img 
-                src={questionImg}
-                alt="The cow thinking about weather" 
-                className="w-64 h-64 object-contain" 
-                onError={() => handleImgError("question")}
-              />
+              <div className="relative">
+                <img 
+                  src={questionImg}
+                  alt="La vache réfléchit à la météo" 
+                  className="w-64 h-64 object-contain filter drop-shadow-lg" 
+                  onError={() => handleImgError("question")}
+                />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-transparent to-white opacity-25 rounded-full"></div>
+              </div>
             )}
-            <p className="text-lg mt-2 font-bold">Quelle météo aujourd'hui ?</p>
+            <div className="mt-4 text-center bg-white bg-opacity-75 px-4 py-2 rounded-full shadow-md">
+              <p className="text-lg font-bold text-blue-800">Quelle météo aujourd'hui à {currentLocation} ?</p>
+            </div>
           </div>
         );
-      
+
       case AnimationState.SOLUTION:
         return (
-          <div className="flex flex-col items-center">
+          <div className={`flex flex-col items-center transition-all duration-300 ${transitionClasses}`}>
             {imgError["solution"] ? (
-              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border">
-                <p className="text-red-500">Image not found</p>
+              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border rounded-lg">
+                <p className="text-red-500">Image non trouvée</p>
               </div>
             ) : (
-              <img 
-                src={solutionImg}
-                alt="Cow about to reveal the weather" 
-                className="w-64 h-64 object-contain" 
-                onError={() => handleImgError("solution")}
-              />
+              <div className="relative">
+                <img 
+                  src={solutionImg}
+                  alt="La vache révèle la météo" 
+                  className="w-64 h-64 object-contain filter drop-shadow-lg" 
+                  onError={() => handleImgError("solution")}
+                />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-transparent to-white opacity-25 rounded-full"></div>
+              </div>
             )}
-            <p className="text-lg mt-2 font-bold">Voici la météo !</p>
+            <div className="mt-4 text-center bg-white bg-opacity-75 px-4 py-2 rounded-full shadow-md">
+              <p className="text-lg font-bold text-blue-800">Voici la météo pour {currentLocation} !</p>
+            </div>
           </div>
         );
         
       case AnimationState.WEATHER:
         const weatherImg = weatherImages[weatherType];
         return (
-          <div className="flex flex-col items-center">
+          <div className={`flex flex-col items-center transition-all duration-300 ${transitionClasses}`}>
             {!weatherImg || imgError[weatherType] ? (
-              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border">
-                <p className="text-red-500">Image not found: {weatherType}.png</p>
+              <div className="w-64 h-64 bg-gray-200 flex items-center justify-center border rounded-lg">
+                <p className="text-red-500">Image non trouvée: {weatherType}.png</p>
               </div>
             ) : (
-              <img 
-                src={weatherImg}
-                alt={`Cow in ${weatherType} weather`} 
-                className="w-64 h-64 object-contain" 
-                onError={() => handleImgError(weatherType)}
-              />
+              <div className="relative">
+                <img 
+                  src={weatherImg}
+                  alt={`La vache dans une météo ${weatherType}`} 
+                  className="w-64 h-64 object-contain filter drop-shadow-lg" 
+                  onError={() => handleImgError(weatherType)}
+                />
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-transparent to-white opacity-25 rounded-full"></div>
+              </div>
             )}
-            <div className="mt-2 text-center">
-              <p className="font-bold text-lg">{todayForecast.date}</p>
-              <p>{todayForecast.temperature_c}°C | {weatherType}</p>
-              <p>Précipitations: {todayForecast.pluie_mm}mm</p>
-              <p>Nuages: {todayForecast.taux_de_nuage}%</p>
+            <div className="mt-4 text-center bg-white bg-opacity-75 px-4 py-2 rounded-full shadow-md">
+              {todayWeather ? (
+                <>
+                  <p className="font-bold text-lg text-blue-800">{todayWeather.date}</p>
+                  <p>{todayWeather.temperature_c}°C | {weatherType}</p>
+                  <p>Précipitations: {todayWeather.pluie_mm}mm</p>
+                  <p>Nuages: {todayWeather.taux_de_nuage}%</p>
+                </>
+              ) : (
+                <p className="text-blue-800">Données météo non disponibles</p>
+              )}
             </div>
           </div>
         );
@@ -188,7 +221,7 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = t
           <li>src/assets/image/presentation.png</li>
           <li>src/assets/image/question.png</li>
           <li>src/assets/image/solution.png</li>
-          <li>src/assets/image/{getWeatherType()}.png</li>
+          <li>src/assets/image/{weatherType}.png</li>
         </ul>
         <p>Make sure these files exist in your <strong>src/assets/image</strong> directory!</p>
         <button 
@@ -202,9 +235,14 @@ const WeatherCow: React.FC<WeatherCowProps> = ({ cycleTime = 6000, showDebug = t
   };
   
   return (
-    <div className="weather-cow-container">
+    <div className="weather-cow-container relative">
+      {/* Current state indicator */}
+      <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-2 py-1 rounded-bl-lg">
+        {getStateDescription()}
+      </div>
+      
       {renderCowImage()}
-      {renderDebugInfo()}
+      {showDebug && renderDebugInfo()}
     </div>
   );
 };
