@@ -105,6 +105,121 @@ body {
   animation: slideIn 0.5s ease-out forwards;
 }
 
+/* Nouvelle animation de pulsation lente */
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Animations supplémentaires pour effet dessin animé */
+@keyframes bounce-custom {
+  0%, 100% { 
+    transform: translateY(0) scale(1);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% { 
+    transform: translateY(-10%) scale(1.05);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-bounce-custom {
+  animation: bounce-custom 0.8s ease-in-out;
+}
+
+@keyframes thinking {
+  0% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-5px) rotate(-3deg); }
+  50% { transform: translateX(0) rotate(0deg); }
+  75% { transform: translateX(5px) rotate(3deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+
+.animate-thinking {
+  animation: thinking 2.5s ease-in-out infinite;
+}
+
+@keyframes reveal {
+  0% { transform: scale(0.95) rotateY(-20deg); opacity: 0.5; }
+  60% { transform: scale(1.05) rotateY(10deg); opacity: 1; }
+  100% { transform: scale(1) rotateY(0); opacity: 1; }
+}
+
+.animate-reveal {
+  animation: reveal 1.5s ease-out;
+}
+
+@keyframes weather {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.animate-weather {
+  animation: weather 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg) translateY(-5px); }
+  50% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(-5deg) translateY(-5px); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  33% { transform: translateY(-10px) translateX(5px); }
+  66% { transform: translateY(-5px) translateX(-5px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes raindrop {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(30px) scale(0.9); opacity: 0; }
+}
+
+.animate-raindrop {
+  animation: raindrop 1.5s linear infinite;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-20px) scale(0.8); opacity: 0; }
+}
+
+.animate-float-up {
+  animation: float-up 3s ease-out infinite;
+}
+
+/* Ajout d'effets 3D */
+.effect-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Amélioration des ombres */
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
 /* Effets de texte */
 .text-shadow-lg {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);

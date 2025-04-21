@@ -7,6 +7,7 @@ import { useWeather } from "@/context/WeatherContext";
 function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [animationCompleted, setAnimationCompleted] = useState(false);
   const bgRef = useRef<HTMLDivElement>(null);
   
   const { todayWeather, currentLocation, isLoading } = useWeather();
@@ -45,14 +46,20 @@ function HomePage() {
     };
   }, [imageLoaded]);
 
+  const handleAnimationComplete = () => {
+    setAnimationCompleted(true);
+    // Reset animation completion status after a delay
+    setTimeout(() => setAnimationCompleted(false), 1000);
+  };
+
   return (
     <div 
       ref={bgRef}
-      className={`flex flex-col items-center justify-center h-screen relative z-10 transition-all duration-700 
+      className={`flex flex-col items-center justify-center min-h-screen relative z-10 transition-all duration-700 
                 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.02]'}`}
       style={{ 
         backgroundImage: "url('/src/assets/background/b-sun.png')", 
-        backgroundSize: "1920px 1080px",
+        backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
         transition: "background-position 0.3s ease-out"
@@ -67,96 +74,128 @@ function HomePage() {
       </div>
 
       {/* Overlay pour améliorer la lisibilité */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-0"></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent z-0"></div>
       
       {/* Titre principal avec animation */}
-      <div className="absolute top-10 left-10 md:left-20 text-white text-shadow-lg z-20">
+      <div className="absolute top-4 left-0 right-0 text-center text-white text-shadow-lg z-20">
         <h1 className="text-4xl md:text-5xl font-bold mb-2 animate-fadeIn">Météo Vache</h1>
-        <p className="text-xl md:text-2xl font-light opacity-90 slide-in" 
+        <p className="text-xl md:text-2xl font-light opacity-90 animate-fadeIn" 
            style={{ animationDelay: '0.3s' }}>
           {currentLocation || "Votre bulletin météo quotidien"}
         </p>
       </div>
       
-      {/* Contenu principal */}
-      <div className="flex flex-col-reverse md:flex-row w-full h-full relative z-10">
-        {/* Section info météo */}
-        <div className="md:w-1/3 h-full flex items-center justify-center px-4 md:px-10">
+      {/* Contenu principal - Format interview */}
+      <div className="w-full max-w-6xl mx-auto px-4 flex flex-col items-center justify-center mt-24 mb-10 relative z-10">
+        {/* Section vache météo - Centrée */}
+        <div className="w-full max-w-xl transform transition-all duration-500 
+                      hover:scale-105 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+          <WeatherCow 
+            cycleTime={12000} 
+            showDebug={false}
+            onAnimationComplete={handleAnimationComplete} 
+          />
+        </div>
+        
+        {/* Section info météo - Sous la vache */}
+        <div className={`mt-8 w-full max-w-md transform transition-all duration-500 
+                      ${animationCompleted ? 'scale-105' : 'scale-100'}`}>
           {todayWeather ? (
             <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-md p-6 rounded-2xl 
-                          shadow-xl border border-white border-opacity-25 text-white max-w-md w-full
-                          slide-in" style={{ animationDelay: '0.5s' }}>
-              <h2 className="text-2xl font-bold mb-4">Météo du jour</h2>
-              <div className="text-sm text-white/80 mb-4">{todayWeather.date}</div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>Température</span>
-                  <span className="font-semibold">{todayWeather.temperature_c}°C</span>
+                          shadow-xl border border-white border-opacity-25 text-white w-full
+                          animate-fadeIn" style={{ animationDelay: '0.7s' }}>
+              <h2 className="text-2xl font-bold mb-4 text-center">Résumé du jour</h2>
+              <div className="flex flex-col md:flex-row justify-between gap-4">
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500 bg-opacity-30 rounded-full">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-70">Température</div>
+                      <div className="font-bold">{todayWeather.temperature_c}°C</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500 bg-opacity-30 rounded-full">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-70">Précipitations</div>
+                      <div className="font-bold">{todayWeather.pluie_mm} mm</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>Précipitations</span>
-                  <span className="font-semibold">{todayWeather.pluie_mm} mm</span>
+                
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500 bg-opacity-30 rounded-full">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-70">Nuages</div>
+                      <div className="font-bold">{todayWeather.taux_de_nuage}%</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-500 bg-opacity-30 rounded-full">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-sm opacity-70">Date</div>
+                      <div className="font-bold">{todayWeather.date}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>Nuages</span>
-                  <span className="font-semibold">{todayWeather.taux_de_nuage}%</span>
-                </div>
-                <div className="w-full bg-white/30 h-1 rounded-full my-2"></div>
-                <div className="flex justify-center">
-                  <Link to="/stats">
-                    <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/40 rounded-lg transition-all hover:scale-105">
-                      Voir plus de détails
-                    </Button>
-                  </Link>
-                </div>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="mt-6 flex justify-center">
+                <Link to="/stats">
+                  <Button className="bg-white/20 hover:bg-white/30 text-white border border-white/40 rounded-lg 
+                                   transition-all hover:scale-105 px-6 py-2">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Voir toutes les prévisions
+                  </Button>
+                </Link>
               </div>
             </div>
           ) : (
             <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-md p-6 rounded-2xl 
-                          shadow-xl border border-white border-opacity-25 text-white max-w-md w-full
-                          slide-in" style={{ animationDelay: '0.5s' }}>
-              <h2 className="text-2xl font-bold mb-4">Météo du jour</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>Température</span>
-                  <span className="font-semibold">21°C</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Précipitations</span>
-                  <span className="font-semibold">0%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Vent</span>
-                  <span className="font-semibold">12 km/h</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Humidité</span>
-                  <span className="font-semibold">45%</span>
-                </div>
-              </div>
+                        shadow-xl border border-white border-opacity-25 text-white
+                        animate-fadeIn" style={{ animationDelay: '0.7s' }}>
+              <p className="text-center">Chargement des données météo...</p>
             </div>
           )}
         </div>
-
-        {/* Section vache météo */}
-        <div className="md:w-2/3 flex justify-end items-center pr-0 md:pr-12 lg:pr-24">
-          <div className="w-full max-w-3xl transform scale-125 md:scale-150 transition-transform hover:scale-[1.52] duration-500
-                          slide-in" style={{ animationDelay: '0.7s' }}>
-            <WeatherCow cycleTime={9000} showDebug={false} />
-          </div>
-        </div>
       </div>
-
-      {/* Boutons d'action améliorés */}
-      <div className="absolute bottom-6 right-6 flex gap-4 z-20">
-        <Link to="/stats">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg px-8 py-2.5 transition-all hover:scale-105 font-medium">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Statistiques
-          </Button>
-        </Link>
+      
+      {/* Citation du jour - Style interview */}
+      <div className="absolute bottom-6 w-full text-center z-20">
+        <div className="inline-block bg-white/30 backdrop-filter backdrop-blur-md px-6 py-3 rounded-full 
+                      shadow-lg border border-white/40 text-white text-shadow-lg animate-fadeIn"
+             style={{ animationDelay: '1s' }}>
+          <p className="italic">
+            "Le temps change, mais notre météo reste précise !"
+          </p>
+        </div>
       </div>
     </div>
   );
