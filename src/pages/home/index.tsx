@@ -4,19 +4,11 @@ import { Link } from "@tanstack/react-router";
 
 function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-200 p-4 relative">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center min-h-[90vh] gap-8">
-        {/* Text content in white block on left */}
-        <div className="bg-white p-6 rounded-xl shadow-lg max-w-md text-center md:text-left order-2 md:order-1">
-          <h1 className="text-3xl font-bold text-blue-800 mb-2">Météo de Molly</h1>
-          <p className="text-lg text-blue-600">
-            Découvrez les prévisions météorologiques présentées par notre vache météorologue Molly.
-            Elle vous informe sur le temps qu'il fait aujourd'hui avec son style unique !
-          </p>
-        </div>
-        
-        {/* Large central WeatherCow animation on right */}
-        <div className="w-full max-w-lg order-1 md:order-2">
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-red-600 relative z-10">
+      {/* Full-height content without header */}
+      <div className="flex w-full h-full justify-end items-center pr-0 md:pr-12 lg:pr-24">
+        {/* Enlarged WeatherCow animation positioned to the right */}
+        <div className="w-full max-w-3xl transform scale-125 md:scale-150">
           <WeatherCow cycleTime={9000} showDebug={false} />
         </div>
       </div>
