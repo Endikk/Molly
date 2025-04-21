@@ -1,0 +1,32 @@
+[
+    {
+        "date": "2025-04-01",
+        "pluie_mm": 5.2,
+        "temperature_c": 18.5,
+        "taux_de_nuage": 75
+    },
+    {
+        "date": "2025-04-02",
+        "pluie_mm": 0.0,
+        "temperature_c": 21.3,
+        "taux_de_nuage": 20
+    },
+    {
+        "date": "2025-04-03",
+        "pluie_mm": 12.7,
+        "temperature_c": 16.8,
+        "taux_de_nuage": 90
+    },
+    {
+        "date": "2025-04-04",
+        "pluie_mm": 3.0,
+        "temperature_c": 19.0,
+        "taux_de_nuage": 60
+    },
+    {
+        "date": "2025-04-05",
+        "pluie_mm": 0.0,
+        "temperature_c": 22.1,
+        "taux_de_nuage": 4
+    }
+]
